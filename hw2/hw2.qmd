@@ -1,0 +1,348 @@
+---
+title: "212-hw2"
+output: html_document
+date: "2025-02-03"
+---
+
+# Q1
+**from 4.2 we get:**：  
+   \[
+   p(X) = \frac{e^{\beta_0 + \beta_1 X}}{1 + e^{\beta_0 + \beta_1 X}}
+   \]
+
+**so we can get \(1 - p(X)\) as**：  
+   \[
+   1 - p(X) = 1 - \frac{e^{\beta_0 + \beta_1 X}}{1 + e^{\beta_0 + \beta_1 X}} = \frac{1}{1 + e^{\beta_0 + \beta_1 X}}.
+   \]
+
+**and get  \(\frac{p(X)}{1 - p(X)}\)**：  
+   \[
+   \frac{p(X)}{1 - p(X)} = \frac{\frac{e^{\beta_0 + \beta_1 X}}{1 + e^{\beta_0 + \beta_1 X}}}{\frac{1}{1 + e^{\beta_0 + \beta_1 X}}} = e^{\beta_0 + \beta_1 X}.
+   \]
+
+**so we conclude**：  
+   \[
+   \frac{p(X)}{1 - p(X)} = e^{\beta_0 + \beta_1 X} \quad \square
+   \]
+
+
+# Q2
+$$
+\begin{aligned}
+z &= \hat{\beta}_0 + \hat{\beta}_1 X_1 + \hat{\beta}_2 X_2 \\
+  &= -6 + 0.05 \times 40 + 1 \times 3.5 \\
+  &= -0.5 \\
+P(Y=1) &= \frac{1}{1 + e^{-z}} = \frac{1}{1 + e^{0.5}} \approx \boxed{0.3775}
+\end{aligned}
+$$
+\[
+\begin{aligned}
+0 &= -6 + 0.05 X_1 + 1 \times 3.5 \\
+0.05 X_1 &= 2.5 \\
+X_1 &= \frac{2.5}{0.05} = \boxed{50}
+\end{aligned}
+\]
+
+# Q3
+## (a) Fraction of People Who Will Default
+
+Given that the **odds** of defaulting on a credit card payment is 0.37, so calculate the probability \( p \).
+
+\[
+\text{Odds} = \frac{p}{1 - p}
+\]
+
+Substituting the given value:
+
+\[
+0.37 = \frac{p}{1 - p}
+\]
+
+Solving for \( p \):
+
+\[
+p = 0.37 (1 - p)
+\]
+
+\[
+p = 0.37 - 0.37p
+\]
+
+\[
+p + 0.37p = 0.37
+\]
+
+\[
+1.37p = 0.37
+\]
+
+\[
+p = \frac{0.37}{1.37} \approx 0.27
+\]
+
+Thus, approximately **27%** of people will default.
+
+## (b) Calculating the Odds of Default
+
+Given that the probability  \( p = 16\% = 0.16 \), we calculate the **odds** using:
+
+\[
+\text{Odds} = \frac{p}{1 - p}
+\]
+
+\[
+\text{Odds} = \frac{0.16}{1 - 0.16} = \frac{0.16}{0.84} \approx 0.19
+\]
+
+Thus, the **odds** of defaulting are **0.19** (or **19:100**)
+
+# Q4
+## a
+```{r}
+library(ISLR2)
+data("Weekly")  
+summary(Weekly)
+# plot connected with time
+plot(Weekly$Year, Weekly$Volume, type = "l", 
+     xlab = "Year", ylab = "Volume", main = "Trading Volume Over Time")
+pairs(~ Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume, data = Weekly)
+```
+The first column shows the market data's time series trend, revealing unstable returns with significant fluctuations and an increasing trade volume over time.  
+
+Correlation analysis shows that lag returns are uncorrelated, while volume is strongly positively correlated with Year, indicating growing market activity over time.  
+
+The histogram indicates a right-skewed volume distribution, while lag returns follow a normal distribution.
+
+## (b)
+```{r}
+# distribution
+barplot(table(Weekly$Direction), main = "Direction Distribution")
+# generate model
+model_logistic <- glm(Direction ~ Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume, 
+                data = Weekly, family = binomial)
+summary(model_logistic)
+logit_mod <- glm(
+  Direction ~ Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume, 
+  family = binomial, 
+  data = Weekly
+  )
+summary(logit_mod)
+```
+The p-value of Lag2 is 0.0296 which is less than 0.05, so we can reject the null hypothesis and conclude that Lag2 is  statistical significant at 95% confidence level.
+
+## (c)
+```{r}
+# if the probability higher than 0.5, marked as up, or is down
+pred_full <- ifelse(predict(model_logistic, type = "response") > 0.5, "Up", "Down")
+conf_matrix_full <- table(Predicted = pred_full, Actual = Weekly$Direction)
+conf_matrix_full
+# calculate rate
+accuracy_full <- mean(pred_full == Weekly$Direction)
+accuracy_full
+```
+## (d)
+```{r}
+train <- Weekly$Year < 2009
+Weekly_train <- Weekly[train, ]
+Weekly_test <- Weekly[!train, ]
+model_logistic <- glm(Direction ~ Lag2, data = Weekly_train, family = binomial)
+# predict
+logit_pred <- ifelse(predict(model_logistic, Weekly_test, type = "response") > 0.5, "Up", "Down")
+conf_matrix_logistic <- table(Predicted = logit_pred, Actual = Weekly_test$Direction)
+conf_matrix_logistic
+# calculate
+accuracy_logistic <- mean(logit_pred == Weekly_test$Direction)
+accuracy_logistic
+
+```
+## (e)
+```{r}
+library(MASS)
+model_lda <- lda(Direction ~ Lag2, data = Weekly_train)
+pred_lda <- predict(model_lda, Weekly_test)
+conf_matrix_lda <- table(Predicted = pred_lda$class, Actual = Weekly_test$Direction)
+conf_matrix_lda
+accuracy_lda <- mean(pred_lda$class == Weekly_test$Direction)
+accuracy_lda
+```
+## (f)
+```{r}
+model_qda <- qda(Direction ~ Lag2, data = Weekly_train)
+pred_qda <- predict(model_qda, Weekly_test)
+conf_matrix_qda <- table(Predicted = pred_qda$class, Actual = Weekly_test$Direction)
+conf_matrix_qda
+accuracy_qda <- mean(pred_qda$class == Weekly_test$Direction)
+accuracy_qda
+```
+## (g)
+```{r}
+library(class)
+# name the data
+train_X <- as.matrix(Weekly_train$Lag2)
+test_X <- as.matrix(Weekly_test$Lag2)
+train_direction <- Weekly_train$Direction
+
+# use K = 1 to categorize for KNN 
+pred_knn <- knn(train_X, test_X, train_direction, k = 1)
+conf_matrix_knn <- table(Predicted = pred_knn, Actual = Weekly_test$Direction)
+conf_matrix_knn
+accuracy_knn <- mean(pred_knn == Weekly_test$Direction)
+accuracy_knn
+```
+
+## (h)
+```{r}
+library(e1071)
+model_nb <- naiveBayes(Direction ~ Lag2, data = Weekly_train)
+pred_nb <- predict(model_nb, Weekly_test)
+conf_matrix_nb <- table(Predicted = pred_nb, Actual = Weekly_test$Direction)
+conf_matrix_nb
+accuracy_nb <- mean(pred_nb == Weekly_test$Direction)
+accuracy_nb
+```
+
+## (i)
+```{r}
+library(pROC)
+library(tibble)
+library(MASS)
+library(class)
+library(e1071)  
+# model LDA 
+model_lda <- lda(Direction ~ Lag2, data = Weekly_train)
+lda_pred <- predict(model_lda, Weekly_test)
+lda_pred_prob <- lda_pred$posterior[, 2]  
+# model qda
+model_qda <- qda(Direction ~ Lag2, data = Weekly_train)
+qda_pred <- predict(model_qda, Weekly_test)
+qda_pred_prob <- qda_pred$posterior[, 2]
+# model nb
+model_nb <- naiveBayes(Direction ~ Lag2, data = Weekly_train)
+nb_pred_prob <- predict(model_nb, Weekly_test, type = "raw")[, 2]
+
+library(class)
+knn_train_matrix <- as.matrix(Weekly_train[, c("Lag2")])
+knn_test_matrix <- as.matrix(Weekly_test[, c("Lag2")])
+
+# train knn
+knn_pred <- knn(
+  train = knn_train_matrix, 
+  test = knn_test_matrix,
+  cl = Weekly_train$Direction,
+  prob = TRUE,
+  k = 1
+)
+
+knn_pred_prob <- 1 - attr(knn_pred, "prob")
+acc_f = function(cfm) {
+  (cfm['Up', 'Up'] + cfm['Down', 'Down']) / sum(cfm)
+}
+
+fpr_f = function(cfm) {
+  cfm['Up', 'Down'] / sum(cfm[, 'Down'])
+}
+
+fnr_f = function(cfm) {
+  cfm['Down', 'Up'] / sum(cfm[, 'Up'])
+}
+
+auc_f = function(pred) {
+  y = pred$y
+  pred_prob = pred$prob
+  roc_object <- roc(y, pred_prob)
+  auc(roc_object)[1]
+}
+# probility
+logistic_pred_prob <- predict(model_logistic, Weekly_test, type = "response")
+lda_pred_prob <- lda_pred$posterior[, 2]
+qda_pred_prob <- qda_pred$posterior[, 2]
+nb_pred_prob <- predict(model_nb, Weekly_test, type = "raw")[, 2]
+
+# KNN predict
+knn_pred_prob <- 1 - attr(knn_pred, "prob")
+conf_matrices <- list(
+  Logistic = conf_matrix_logistic,
+  LDA = conf_matrix_lda,
+  QDA = conf_matrix_qda,
+  NaiveBayes = conf_matrix_nb,
+  KNN = conf_matrix_knn
+)
+
+# calculate ACC, FPR, FNR
+acc_values <- sapply(conf_matrices, acc_f)
+fpr_values <- sapply(conf_matrices, fpr_f)
+fnr_values <- sapply(conf_matrices, fnr_f)
+
+# calculate AUC
+auc_values <- sapply(
+  list(
+    data.frame(y = Weekly_test$Direction, prob = logistic_pred_prob), 
+    data.frame(y = Weekly_test$Direction, prob = lda_pred_prob), 
+    data.frame(y = Weekly_test$Direction, prob = qda_pred_prob), 
+    data.frame(y = Weekly_test$Direction, prob = nb_pred_prob), 
+    data.frame(y = Weekly_test$Direction, prob = knn_pred_prob)
+  ), 
+  auc_f
+)
+# make a tibble
+model_performance <- tibble(
+  Classifier = names(conf_matrices), 
+  Accuracy = acc_values, 
+  FPR = fpr_values, 
+  FNR = fnr_values, 
+  AUC = auc_values
+)
+print(model_performance)
+
+```
+
+## (j)
+```{r}
+Weekly_train$log_lag2 <- log(Weekly_train$Lag2/100 + 1)
+Weekly_train$log_volume <- log(Weekly_train$Volume)
+Weekly_test$log_lag2 <- log(Weekly_test$Lag2/100 + 1)
+Weekly_test$log_volume <- log(Weekly_test$Volume)
+# regression
+model_logistic_combo <- glm(
+  Direction ~ log_lag2 + log_volume + log_lag2:log_volume,
+  data = Weekly_train, 
+  family = binomial
+)
+
+# predict
+pred_test_combo <- ifelse(
+  predict(model_logistic_combo, Weekly_test, type = "response") > 0.5, 
+  "Up", 
+  "Down"
+)
+
+conf_matrix_combo <- table(Predicted = pred_test_combo, Actual = Weekly_test$Direction)
+accuracy_combo <- mean(pred_test_combo == Weekly_test$Direction)
+
+# print
+conf_matrix_combo
+accuracy_combo
+
+```
+## Bonus question: ISL Exercise 4.8.4 (30pts)
+
+**Answer:**
+
+**(a)**  
+Since X is uniformly distributed over [0, 1], the length of a 10% range on X is 0.1. This applies to any value of X, so the fraction of available observations is \(\frac{0.1}{1} = 0.1\).
+
+**(b)**  
+Given that \((X_1, X_2)\) follows a uniform joint distribution on \([0, 1] \times [0, 1]\), a 10% interval on both \(X_1\) and \(X_2\) forms a square. This holds for any \((X_1, X_2)\), so the fraction of available observations is the area of the square divided by the total area, i.e., \(\frac{0.1^2}{1^2} = 0.01\).
+
+**(c)**  
+From (a) and (b), the fraction of available observations is \(0.1^{1/2}\) for (a) and \(0.1^2\) for (b). Therefore, for a p-dimensional hypercube, the fraction of available observations is \(\frac{0.1^p}{1^p}\). For \(p = 100\), this fraction is \(0.1^{100}\), which is a very small number.
+
+**(d)**  
+As \(p\) increases, the fraction of available observations decreases exponentially, meaning the training data “near” a given test observation becomes sparse. This sparsity means that exponentially more data is needed to cover the new volume. Without enough data, it becomes difficult to make reliable predictions because there aren’t enough samples in each local neighborhood. This is a drawback of the KNN model when \(p\) is large.
+
+**(e)**  
+From the general formula \(\frac{length^p}{1^p}\), we can derive that \(length = \sqrt[p]{fraction}\).  
+
+- When \(p = 1\), the length of the interval to include 10% of training observations is 0.1.
+- When \(p = 2\), the side length of the square to include 10% of training observations is \(\sqrt[2]{0.1} \approx 0.32\).
+- When \(p = 100\), the side length of the hypercube to include 10% of training observations is \(\sqrt[100]{0.1} \approx 0.98\).
