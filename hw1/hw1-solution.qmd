@@ -1,0 +1,454 @@
+---
+title: "Biostat 212a Homework 1"
+subtitle: "Due Jan 23, 2024 @ 11:59PM"
+author: "jiayiguo and 206537584"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+format:
+  html:
+    theme: cosmo
+    embed-resources: true
+    number-sections: true
+    toc: true
+    toc-depth: 4
+    toc-location: left
+    code-fold: false
+engine: knitr
+knitr:
+  opts_chunk: 
+    fig.align: 'center'
+    # fig.width: 6
+    # fig.height: 4
+    message: FALSE
+    cache: false
+---
+
+## Filling gaps in lecture notes (10pts)
+
+Consider the regression model
+$$
+Y = f(X) + \epsilon,
+$$
+where $\operatorname{E}(\epsilon) = 0$. 
+
+### Optimal regression function
+
+Show that the choice
+$$
+f_{\text{opt}}(X) = \operatorname{E}(Y | X)
+$$
+minimizes the mean squared prediction error
+$$
+\operatorname{E}\{[Y - f(X)]^2\},
+$$
+where the expectations averages over variations in both $X$ and $Y$. (Hint: condition on $X$.)
+#### Answer
+$$
+\operatorname{E}\{[Y - f(X)]^2\} = \operatorname{E}\{\operatorname{E}\{[Y - f(X)]^2|X\}\}
+$$
+As expectation is a linear operator, to minimize $\operatorname{E}\{[Y - f(X)]^2\}$, we only need to minimize the inner expectation $\operatorname{E}\{[Y - f(X)]^2|X\}$ for each $x_i$. That is
+
+$$
+f(X) = argmin_{f(X)}\operatorname{E}\{[Y - f(X)]^2|X\}
+$$
+
+Decompose the inner expecation by adding and subtracting $\operatorname{E}(Y|X)$:
+
+$$
+\begin{align}
+\operatorname{E}\{[Y - f(X)]^2|X\} &= \operatorname{E}\{[Y - \operatorname{E}(Y|X) + \operatorname{E}(Y|X) - f(X)]^2|X\}\\
+&=\operatorname{E}\{[Y - \operatorname{E}(Y|X)]^2|X\}+\operatorname{E}\{[\operatorname{E}(Y|X) - f(X)]^2|X\}\\
+&+2\operatorname{E}\{[Y - \operatorname{E}(Y|X)]|X\}\operatorname{E}\{[\operatorname{E}(Y|X) - f(X)]|X\}
+\end{align}
+$$
+Let's focus on the last term. As $\operatorname{E}(Y|X) - f(X)$ is a constant given $X$, we can pull it outside the expectation and get
+$$
+\begin{align}
+&2(\operatorname{E}(Y|X) - f(X))\operatorname{E}\{[Y - \operatorname{E}(Y|X)]|X\}\\
+&=\underbrace{2(\operatorname{E}(Y|X) - f(X))}_{\text{constant}}[\operatorname{E}(Y|X)-\operatorname{E}[\operatorname{E}(Y|X)|X]]\\
+&=\underbrace{2(\operatorname{E}(Y|X) - f(X))}_{\text{constant}}[\operatorname{E}(Y|X)-\operatorname{E}(Y|X)]\\
+&=0
+\end{align}
+$$
+$\operatorname{E}[\operatorname{E}(Y|X)|X]=\operatorname{E}(Y|X)$ is because $\operatorname{E}(Y|X)$ is a constant given $X$.
+
+Thus, we have
+$$
+\begin{align}
+\operatorname{E}\{[Y - f(X)]^2|X\} &= \operatorname{E}\{[Y - \operatorname{E}(Y|X)]^2|X\}+\operatorname{E}\{[\operatorname{E}(Y|X) - f(X)]^2|X\}\\
+\end{align}
+$$
+
+
+
+### Bias-variance trade-off
+
+Given an estimate $\hat f$ of $f$, show that the test error at a $x_0$ can be decomposed as
+$$
+\operatorname{E}\{[y_0 - \hat f(x_0)]^2\} = \underbrace{\operatorname{Var}(\hat f(x_0)) + [\operatorname{Bias}(\hat f(x_0))]^2}_{\text{MSE of } \hat f(x_0) \text{ for estimating } f(x_0)} + \underbrace{\operatorname{Var}(\epsilon)}_{\text{irreducible}},
+$$
+where the expectation averages over the variability in $y_0$ and $\hat f$.
+
+#### Answer
+$$
+\begin{align}
+\operatorname{E}\{[y_0 - \hat f(x_0)]^2&=\operatorname{E}\{[f(x_{0})+\epsilon - \hat f(x_0)]^2\}\\
+&=\operatorname{E}\{[f(x_{0}) - \hat f(x_0)]^2\}+\operatorname{E}\{\epsilon^2\}+2\underbrace{\operatorname{E}\{[f(x_{0}) - \hat f(x_0)]\epsilon\}}_{=\operatorname{E}\{f(x_{0}) - \hat f(x_0)\}\operatorname{E}\{\epsilon\}=0}\\
+&=\operatorname{E}\{[f(x_{0}) - \hat f(x_0)]^2\}+\operatorname{E}\{\epsilon^2\}\\
+&=\operatorname{E}\{[f(x_{0}) - \hat f(x_0)]^2\}+\operatorname{Var}(\epsilon)\\
+\end{align}
+$$
+Decompose the first term by adding and subtracting $\operatorname{E}(\hat f(x_0))$:
+
+$$
+\begin{align}
+\operatorname{E}\{[f(x_{0}) - \hat f(x_0)]^2\}&=\operatorname{E}\{[f(x_{0}) - \operatorname{E}(\hat f(x_0))+\operatorname{E}(\hat f(x_0)) - \hat f(x_0)]^2\}\\
+&=\operatorname{E}\{[f(x_{0}) - \operatorname{E}(\hat f(x_0))]^2\}+\operatorname{E}\{[\operatorname{E}(\hat f(x_0)) - \hat f(x_0)]^2\}+2\operatorname{E}\{[f(x_{0}) - \operatorname{E}(\hat f(x_0))][\operatorname{E}(\hat f(x_0)) - \hat f(x_0)]\}
+\end{align}
+$$
+Let's focus on the cross term. As $\hat f(x_0)$ is a constant, we have $\operatorname{E}(\hat f(x_0)) - \hat f(x_0)=0$, so the cross term is 0. Then we have
+
+$$
+\begin{align}
+\operatorname{E}\{[f(x_{0}) - \hat f(x_0)]^2\}&=\operatorname{E}\{[f(x_{0}) - \operatorname{E}(\hat f(x_0))]^2\}+\operatorname{E}\{[\operatorname{E}(\hat f(x_0)) - \hat f(x_0)]^2\}\\
+&=\operatorname{Bias}(\hat f(x_0))^2+\operatorname{Var}(\hat f(x_0))\\
+\end{align}
+$$
+where $\operatorname{Bias}(\hat f(x_0)) = \operatorname{E}[\hat f(x_0)] - f(x_0)$.
+
+Finally, we prove that
+
+$$
+\operatorname{E}\{[y_0 - \hat f(x_0)]^2\} = \operatorname{Var}(\hat f(x_0)) + [\operatorname{Bias}(\hat f(x_0))]^2 + \operatorname{Var}(\epsilon)
+$$
+
+## ISL Exercise 2.4.3 (10pts)
+
+```{r}
+# Load necessary library
+library(ggplot2)
+library(reshape2)
+
+# Define the flexibility levels
+flexibility <- seq(0, 1, length.out = 100)
+
+# Define the curves
+squared_bias <- (1 - flexibility)^2
+variance <- flexibility^2 * 0.5  # Adjusted to make the graph more realistic
+training_error <- (1 - flexibility)^2 + flexibility^2 * 0.1  # Adjusted to make the graph more realistic
+test_error <- (1 - flexibility)^2 * 0.5 + flexibility^2 * 0.5  # Adjusted to make the graph more realistic
+bayes_error <- rep(0.1, length(flexibility))  # Constant Bayes error
+
+# Create a data frame for plotting
+data <- data.frame(
+  Flexibility = flexibility,
+  Squared_Bias = squared_bias,
+  Variance = variance,
+  Training_Error = training_error,
+  Test_Error = test_error,
+  Bayes_Error = bayes_error
+)
+
+# Melt the data for ggplot
+data_melted <- melt(data, id.vars = "Flexibility")
+
+# Plot the curves
+ggplot(data_melted, aes(x = Flexibility, y = value, color = variable)) +
+  geom_line(size = 1) +
+  labs(title = "Bias-Variance Decomposition",
+       x = "Flexibility",
+       y = "Value",
+       color = "Curve") +
+  theme_minimal() +
+  scale_color_manual(values = c("red", "yellow", "green", "blue", "magenta"))
+```
+### Solution
+1.squared bias: As model flexibility increases, squared bias typically decreases because more flexible models are able to fit the data better, thus reducing bias.
+
+2.Variance: As model flexibility increases, variance typically increases because more flexible models may overfit the training data, resulting in an increase in the variance of the prediction on the new data.
+
+3.Training Error: Typically decreases as model flexibility increases because more flexible models are better able to fit the training data.
+
+4.Test Error: initially decreases as model flexibility increases, reaches a minimum and then increases as model flexibility increases further. This is because there is a point at which the model can best generalize to new data, but a model that is too flexible will begin to overfit.
+
+5.Bayes Error: usually a constant that indicates the lowest possible value of the error for a given data and model, independent of the model's flexibility.
+
+## ISL Exercise 2.4.4 (10pts)
+### Answer
+(1) Practical applications of classification
+Fraud detection in financial transactions: response is fraudulent or legitimate. Predictors include transaction amount, transaction frequency, location and user behavior patterns. The goal is prediction, with the aim of predicting in real time whether a transaction is fraudulent or not, in order to prevent financial losses.
+Disease diagnosis in medical imaging: the response is the presence or absence of disease. Predictors include imaging characteristics, patient demographics, and clinical history. The goal is inference and prediction, with the objective of assisting physicians in diagnosing disease by predicting the presence of disease in imaging data.
+Customer Churn Prediction in Telecommunications: the response is customer churn or retention. Predictors include customer demographic characteristics, service usage patterns, billing history, and customer support interactions. The goal is prediction with the objective of predicting which customers are likely to leave the service so that preventive measures can be taken.
+In these classification applications, the goal is usually prediction, but in some cases, such as disease diagnosis, extrapolation is also involved to support clinical decision making.
+
+(2) Practical applications of regression
+Real estate price prediction: the response is the price of a house. Predictors include square footage, number of bedrooms and bathrooms, neighborhood characteristics, and age of the property. The goal is to forecast with the objective of predicting the selling price of a home to help buyers and sellers make informed decisions.
+Retail Demand Forecasting: the response is expected sales volume. Forecasting factors include historical sales data, seasonality, promotions, and economic indicators. The goal is to forecast with the objective of anticipating product demand to optimize inventory management and supply chain operations.
+Electricity Load Forecasting: the response is electricity consumption. Forecasting factors include weather conditions, time of day, day of the week, special events, and historical load data. The goal is forecasting with the objective of predicting energy consumption to effectively balance supply and demand in the grid.
+In these regression applications, the main goal is forecasting, which is critical for planning and operational efficiency.
+
+(3) Practical applications of cluster analysis
+Market Segmentation: predictors include customer demographic characteristics, purchasing behavior and lifestyle preferences. The goal is to identify different market segments that can be targeted for specific marketing strategies.
+Document clustering: Predictors include text features and document metadata. The goal is to organize a large number of documents into clusters based on content similarity for easy retrieval and analysis.
+Social Network Analysis: Predictors include user interactions, common interests, and network connections. The goal is to identify communities or clusters in social networks, which can be useful for understanding social dynamics or targeted advertising.
+
+
+## ISL Exercise 2.4.10 (30pts)
+
+Your can read in the `boston` data set directly from url <https://raw.githubusercontent.com/ucla-biostat-212a/2024winter/master/slides/data/Boston.csv>. A documentation of the `boston` data set is [here](https://www.rdocumentation.org/packages/ISLR2/versions/1.3-2/topics/Boston).
+
+::: {.panel-tabset}
+
+#### R
+
+```{r, evalue = F}
+library(tidyverse)
+
+Boston <- read_csv("https://raw.githubusercontent.com/ucla-biostat-212a/2024winter/master/slides/data/Boston.csv", col_select = -1) %>% 
+  print(width = Inf)
+```
+
+
+
+### (a) How many rows are in this data set? How many columns? What do the rows and columns represent?
+```{r}
+dim(Boston)  
+```
+**Answer**
+There are 506 rows and 13 columns in this data set. Each row represents 1 of 506 suburbs of Boston, and each column represents characteristics of the suburb that may be relevant to the price of houses.
+
+### (b) Make some pairwise scatterplots of the predictors (columns) in this data set. Describe your findings.
+```{r}
+library(MASS)        
+library(GGally)     
+library(ggplot2)     
+library(scales)      
+options(repr.plot.width = 15, repr.plot.height = 12)
+# generate point plot
+ggpairs(Boston,
+        lower = list(
+          continuous = wrap("points", alpha = 0.3, size = 0.3)  
+        ),
+        diag = list(
+          continuous = wrap("barDiag", bins = 20)  
+        )) +
+  theme(
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),  
+    plot.margin = margin(20, 20, 20, 20)  
+  ) +
+  scale_x_continuous(breaks = pretty_breaks(n = 3)) +  
+  scale_y_continuous(breaks = pretty_breaks(n = 3))    
+```
+**Answer**
+The **indus** variable (proportion of non-retail business) is positively correlated with **nox** (nitrogen oxides concentration), **tax** (property-tax rate), **age** (proportion of pre-1940 units), and **lstat** (percentage of lower-status population), while negatively correlated with **dis** (distance to employment centers). This suggests that suburbs with more non-retail businesses tend to have higher pollution, taxes, older housing, lower socioeconomic status, and are farther from employment centers.  
+
+The **tax** and **rad** (accessibility to radial highways) variables are strongly correlated (0.91), indicating higher property-tax rates in suburbs with better highway access. However, outliers in the scatter plot may influence this correlation.  
+
+The **medv** (median home value) and **lstat** variables have a strong negative correlation (-0.74), implying that home values tend to be higher in areas with fewer lower-status residents.
+
+### (c) Are any of the predictors associated with per capita crime rate? If so, explain the relationship.
+#### Answer
+**nox**, **age**, and **lstat** are positively associated with crime rate, while **dis** is negatively associated. This suggests that crime is higher in areas with more pollution, older housing, and lower socioeconomic status, but lower in suburbs farther from employment centers.
+
+### (d) Do any of the census tracts of Boston appear to have particularly high crime rates? Tax rates? Pupil-teacher ratios? Comment on the range of each predictor.
+```{r}
+library(ggplot2)
+library(dplyr)
+ggplot(Boston, aes(y=crim)) + 
+  geom_boxplot(width = 0.1)
+ggplot(Boston, aes(y=tax)) + 
+  geom_boxplot(width = 0.4)
+ggplot(Boston, aes(y=ptratio)) + 
+  geom_boxplot(width = 0.3)
+Boston %>% 
+  dplyr::select(crim, tax, ptratio) %>% 
+  summary()
+```
+**Answer**
+The range of **crim** is 0.006 to 88.98, with the middle 50% between 0.08 and 3.68.  
+The range of **tax** is 187.00 to 711.00, with the middle 50% between 279.00 and 666.00.  
+The range of **ptratio** is 12.60 to 22.00, with the middle 50% between 17.40 and 20.20.
+
+### (e) How many of the census tracts in this data set bound the Charles river?
+```{r}
+Boston %>% 
+  filter(chas == 1) %>% 
+  nrow()
+```
+There are 35 census tracts in this data set bound the Charles river.
+
+### (f) What is the median pupil-teacher ratio among the towns in this data set?
+```{r}
+median(Boston$ptratio)
+```
+The median pupil-teacher ratio among the towns in this data set is 19.05.
+
+### (g) Which census tract of Boston has lowest median value of owner- occupied homes? What are the values of the other predictors for that census tract, and how do those values compare to the overall ranges for those predictors? Comment on your findings.
+```{r}
+Boston %>% 
+  filter(medv == min(medv))
+continuous <- Boston %>% 
+  dplyr::select(-chas)
+ecdfs <- lapply(continuous, ecdf)
+selected_rows <- continuous[continuous$medv==min(continuous$medv),]
+quantiles <- mapply(function(f, column) f(column), ecdfs, selected_rows)
+print(quantiles)
+prop.table(table(Boston$chas))
+```
+house in 399 row, which is cheap for high crime and high ptratio.
+### (h) In this data set, how many of the census tracts average more than seven rooms per dwelling? More than eight rooms per dwelling? Comment on the census tracts that average more than eight rooms per dwelling.
+```{r}
+Boston %>% 
+  filter(rm > 7) %>% 
+  nrow()
+Boston %>% 
+  filter(rm > 8) %>% 
+  nrow()
+Boston %>% 
+  filter(rm > 8)
+```
+64, 13. The more rooms house has, the higher the price will be.
+
+## ISL Exercise 3.7.3 (12pts)
+##(a) 
+
+$$
+\text{Salary} = \beta_0 + \beta_1 \cdot \text{GPA} + \beta_2 \cdot \text{IQ} + \beta_3 \cdot \text{Level} + \beta_4 \cdot (\text{GPA} \times \text{IQ}) + \beta_5 \cdot (\text{GPA} \times \text{Level})
+$$
+
+$$
+\text{Salary} = 50 + 20 \cdot \text{GPA} + 0.07 \cdot \text{IQ} + 35 \cdot \text{Level} + 0.01 \cdot (\text{GPA} \times \text{IQ}) - 10 \cdot (\text{GPA} \times \text{Level})
+$$
+
+
+- when Level = 0（high school，here is the model：
+$$
+\text{Salary}_{\text{High School}} = 50 + 20 \cdot \text{GPA} + 0.07 \cdot \text{IQ} + 0.01 \cdot (\text{GPA} \times \text{IQ})
+$$
+- when Level = 1（college），model is：
+$$
+\text{Salary}_{\text{College}} = 50 + 20 \cdot \text{GPA} + 0.07 \cdot \text{IQ} + 35 + 0.01 \cdot (\text{GPA} \times \text{IQ}) - 10 \cdot \text{GPA}
+$$
+
+
+##ii. "For a fxed value of IQ and GPA, college graduates earn more, on average, than high school graduates." is correct.
+
+### (b) 
+
+as GPA = 4.0，IQ = 110，Level = 1，we get：
+
+$$
+\text{Salary} = 50 + 20 \cdot 4.0 + 0.07 \cdot 110 + 35 + 0.01 \cdot (4.0 \cdot 110) - 10 \cdot 4.0
+$$
+
+- \( 20 \cdot 4.0 = 80 \)
+- \( 0.07 \cdot 110 = 7.7 \)
+- \( 0.01 \cdot (4.0 \cdot 110) = 4.4 \)
+- \( -10 \cdot 4.0 = -40 \)
+
+$$
+\text{Salary} = 50 + 80 + 7.7 + 35 + 4.4 - 40 = 136.1
+$$
+
+### (c) 
+
+The coefficient of the interaction term is \( \beta_4 = 0.01 \), which is a relatively small value. We cannot conclude the existence or non-existence of an interaction effect based on the size of the coefficient alone. It is important to note that the significance of an interaction effect should be determined by a statistical test (e.g., t-test), not just by the size of the coefficient.
+
+##Therefore, the answer is wrong, Statistical tests are needed to confirm the significance of the interaction effect even though the coefficient of the interaction term is small.
+
+## ISL Exercise 3.7.15 (20pts)
+```{r}
+boston <- read.csv("https://raw.githubusercontent.com/ucla-biostat-212a/2024winter/master/slides/data/Boston.csv")
+#a
+predictors <- c("zn", "indus", "chas", "nox", "rm", "age", "dis", "rad", "tax", "ptratio", "lstat", "medv")
+results <- data.frame(Predictor = predictors, 
+                      Coefficient = rep(NA, length(predictors)), 
+                      P_value = rep(NA, length(predictors)))
+
+for (i in 1:length(predictors)) {
+  model <- lm(crim ~ boston[[predictors[i]]], data = boston)
+  results$Coefficient[i] <- coef(model)[2]  
+  results$P_value[i] <- summary(model)$coefficients[2, 4]  
+}
+print(results)
+
+# b
+multivariate_model <- lm(crim ~ zn + indus + chas + nox + rm + age + dis + rad + tax + ptratio + lstat + medv, data = boston)
+summary(multivariate_model)
+# c
+simple_coefs <- sapply(predictors, function(x) coef(lm(crim ~ boston[[x]], data = boston))[2])
+multi_coefs <- coef(multivariate_model)[-1]  
+plot(simple_coefs, multi_coefs, xlab = "Simple Regression Coefficients", ylab = "Multiple Regression Coefficients",
+     main = "Comparison of Coefficients")
+abline(0, 1, col = "red", lty = 2)
+
+# d
+nonlinear_results <- data.frame(Predictor = predictors, 
+                                Coefficient1 = rep(NA, length(predictors)),
+                                Coefficient2 = rep(NA, length(predictors)))
+
+for (i in 1:length(predictors)) {
+  model <- lm(crim ~ boston[[predictors[i]]] + I(boston[[predictors[i]]]^2), data = boston)
+  nonlinear_results$Coefficient1[i] <- coef(model)[2] 
+  nonlinear_results$Coefficient2[i] <- coef(model)[3]  
+}
+print(nonlinear_results)
+
+
+```
+**Answer**
+a: All variables except chas are significant
+b: zn, dis, rad, medv are significant.
+c: Most of the simple regression coefficients changed in the multiple regression. This suggests that the effect of individual predictor variables on the response variable may change when other predictor variables are controlled for. 
+
+
+## Bonus question (20pts)
+
+For multiple linear regression, show that $R^2$ is equal to the correlation between the response vector $\mathbf{y} = (y_1, \ldots, y_n)^T$ and the fitted values $\hat{\mathbf{y}} = (\hat y_1, \ldots, \hat y_n)^T$. That is
+$$
+R^2 = 1 - \frac{\text{RSS}}{\text{TSS}} = [\operatorname{Cor}(\mathbf{y}, \hat{\mathbf{y}})]^2.
+$$
+$$
+\begin{align}
+R^2 &= 1 - \frac{\text{RSS}}{\text{TSS}} \\
+&= 1 - \frac{\sum_{i=1}^n (y_i - \hat y_i)^2}{\sum_{i=1}^n (y_i - \bar y)^2}
+\end{align}
+$$
+Let's expand the TSS by plus and minus $\hat y_i$:
+$$
+\begin{align}
+TSS = \sum_{i=1}^n (y_i - \bar y)^2 &= \sum_{i=1}^n (y_i - \hat y_i + \hat y_i - \bar y)^2 \\
+&= \sum_{i=1}^n (y_i - \hat y_i)^2 + \sum_{i=1}^n (\hat y_i - \bar y)^2 + 2 \sum_{i=1}^n (y_i - \hat y_i)(\hat y_i - \bar y) \\
+&= \sum_{i=1}^n (y_i - \hat y_i)^2 + \sum_{i=1}^n (\hat y_i - \bar y)^2 + 2[\sum_{i=1}^n(y_i - \hat y_i)\hat y_i+\bar y\sum_{i=1}^n(y_i - \hat y_i)]\\
+&= \sum_{i=1}^n (y_i - \hat y_i)^2 + \sum_{i=1}^n (\hat y_i - \bar y)^2
+\end{align}
+$$
+The term $\sum_{i=1}^n(y_i - \hat y_i)\hat y_i$ is zero because residuals are orthogonal to the predicted values, and $\sum_{i=1}^n(y_i - \hat y_i)$ is zero because the residuals sum to zero in linear regression. Thus, we can get:
+$$
+\begin{align}
+R^2 &= 1 - \frac{\sum_{i=1}^n (y_i - \hat y_i)^2}{\sum_{i=1}^n (y_i - \bar y)^2}\\
+&=\frac{\sum_{i=1}^n (\hat y_i - \bar y)^2}{\sum_{i=1}^n (y_i - \bar y)^2}
+\end{align}
+$$
+$$
+\begin{align}
+[\operatorname{Cor}(\mathbf{y}, \hat{\mathbf{y}})]^2 &= \left(\frac{\sum_{i=1}^n (y_i - \bar y)(\hat y_i - \bar y)}{\sqrt{\sum_{i=1}^n (y_i - \bar y)^2} \sqrt{\sum_{i=1}^n (\hat y_i - \bar y)^2}}\right)^2 \\
+&= \frac{[\sum_{i=1}^n (y_i - \bar y)(\hat y_i - \bar y)]^2}{\sum_{i=1}^n (y_i - \bar y)^2 \sum_{i=1}^n (\hat y_i - \bar y)^2}
+\end{align}
+$$
+Plug in $y_i = \hat y_i + e_i$ (where $e_i = y_i - \hat y_i$), to the numerator, we have:
+$$
+\begin{align}
+numerator &= [\sum_{i=1}^n (\hat y_i + e_i - \bar y)(\hat y_i - \bar y)]^2\\
+&= [\sum_{i=1}^n (\hat y_i - \bar y)^2 + \sum_{i=1}^n e_i(\hat y_i - \bar y)]^2\\
+&= [\sum_{i=1}^n (\hat y_i - \bar y)^2 + \sum_{i=1}^n e_i\hat y_i - \bar y\sum_{i=1}^n e_i]^2\\
+&= [\sum_{i=1}^n (\hat y_i - \bar y)^2]^2
+\end{align}
+$$
+Same as above, the term $\sum_{i=1}^n e_i\hat y_i$ is zero because residuals are orthogonal to the predicted values, and $\sum_{i=1}^n e_i$ is zero because the residuals sum to zero in linear regression. 
+$$
+\begin{align}
+[\operatorname{Cor}(\mathbf{y}, \hat{\mathbf{y}})]^2 &= \frac{[\sum_{i=1}^n (\hat y_i - \bar y)^2]^2}{\sum_{i=1}^n (y_i - \bar y)^2 \sum_{i=1}^n (\hat y_i - \bar y)^2}\\
+&= \frac{\sum_{i=1}^n (\hat y_i - \bar y)^2}{\sum_{i=1}^n (y_i - \bar y)^2}\\
+&= R^2
+\end{align}
+$$
